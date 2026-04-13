@@ -1,57 +1,51 @@
-// Package filter provides functionality for filtering log entries
-// based on time ranges and field value conditions.
+// Package filter provides time-range and field-value filtering for log entries.
 package filter
 
 import (
 	"time"
+
+	"github.com/user/logslice/internal/parser"
 )
 
-// Options holds the filtering criteria for log entries.
-type Options struct {
-	// TimeFrom filters entries at or after this time. Zero value means no lower bound.
-	TimeFrom time.Time
-	// TimeTo filters entries at or before this time. Zero value means no upper bound.
-	TimeTo time.Time
-	// Fields is a map of field name to expected value for equality filtering.
+// Filter defines criteria for matching log entries.
+type Filter struct {
+	// From is the inclusive start of the time range. Nil means no lower bound.
+	From *time.Time
+	// To is the inclusive end of the time range. Nil means no upper bound.
+	To *time.Time
+	// Fields is a map of field names to required values.
 	Fields map[string]string
 }
 
-// Entry represents a parsed log entry with a timestamp and arbitrary fields.
-type Entry struct {
-	Timestamp time.Time
-	Fields    map[string]interface{}
-	Raw       string
-}
-
-// Match reports whether the entry satisfies all conditions in opts.
-func Match(entry Entry, opts Options) bool {
-	if !opts.TimeFrom.IsZero() && entry.Timestamp.Before(opts.TimeFrom) {
+// Match reports whether the given entry satisfies all criteria in f.
+func Match(e parser.Entry, f Filter) bool {
+	if f.From != nil && e.Timestamp.Before(*f.From) {
 		return false
 	}
-	if !opts.TimeTo.IsZero() && entry.Timestamp.After(opts.TimeTo) {
+	if f.To != nil && e.Timestamp.After(*f.To) {
 		return false
 	}
-	for key, expected := range opts.Fields {
-		val, ok := entry.Fields[key]
+	for k, v := range f.Fields {
+		got, ok := e.Fields[k]
 		if !ok {
 			return false
 		}
-		strVal, ok := val.(string)
+		gotStr, ok := got.(string)
 		if !ok {
 			return false
 		}
-		if strVal != expected {
+		if gotStr != v {
 			return false
 		}
 	}
 	return true
 }
 
-// Apply filters a slice of entries according to opts and returns matching entries.
-func Apply(entries []Entry, opts Options) []Entry {
-	result := make([]Entry, 0, len(entries))
+// Apply returns only the entries from entries that satisfy f.
+func Apply(entries []parser.Entry, f Filter) []parser.Entry {
+	result := make([]parser.Entry, 0, len(entries))
 	for _, e := range entries {
-		if Match(e, opts) {
+		if Match(e, f) {
 			result = append(result, e)
 		}
 	}
