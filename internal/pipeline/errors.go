@@ -15,6 +15,8 @@ var (
 )
 
 // validate checks that the required Config fields are populated.
+// It returns the first validation error encountered, or nil if the
+// configuration is valid.
 func validate(cfg Config) error {
 	if cfg.Reader == nil {
 		return ErrNoReader
