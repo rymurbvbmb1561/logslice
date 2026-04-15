@@ -57,3 +57,27 @@ func TestParseAndApply_EmptyRules_EntryUnchanged(t *testing.T) {
 		t.Errorf("expected same number of fields, got %d", len(out))
 	}
 }
+
+func TestParseAndApply_Apply_DoesNotMutateInput(t *testing.T) {
+	t.Parallel()
+	specs := []string{
+		"delete:secret",
+		"set:env=prod",
+	}
+	rules, err := transform.ParseRules(specs)
+	if err != nil {
+		t.Fatalf("ParseRules: %v", err)
+	}
+	tr := transform.New(rules)
+
+	entry := parser.Entry{"secret": "abc123", "msg": "test"}
+	_ = tr.Apply(entry)
+
+	// Verify the original entry was not modified by Apply.
+	if _, ok := entry["secret"]; !ok {
+		t.Error("Apply mutated the input entry: 'secret' was removed")
+	}
+	if _, ok := entry["env"]; ok {
+		t.Error("Apply mutated the input entry: 'env' was added")
+	}
+}
