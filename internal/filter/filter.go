@@ -51,3 +51,9 @@ func Apply(entries []parser.Entry, f Filter) []parser.Entry {
 	}
 	return result
 }
+
+// IsEmpty reports whether f has no filtering criteria, meaning every entry
+// would match. This is useful for skipping unnecessary processing.
+func (f Filter) IsEmpty() bool {
+	return f.From == nil && f.To == nil && len(f.Fields) == 0
+}
