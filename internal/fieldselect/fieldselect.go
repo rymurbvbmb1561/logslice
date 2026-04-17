@@ -54,6 +54,15 @@ func (s *Selector) Apply(e parser.Entry) parser.Entry {
 	return out
 }
 
+// Fields returns the set of field names configured on the selector.
+func (s *Selector) Fields() []string {
+	out := make([]string, 0, len(s.fields))
+	for f := range s.fields {
+		out = append(out, f)
+	}
+	return out
+}
+
 // ParseFields splits a comma-separated field list.
 func ParseFields(spec string) []string {
 	if spec == "" {
