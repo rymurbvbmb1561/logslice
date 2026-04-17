@@ -13,4 +13,7 @@
 //	masked := m.Apply(entry)
 //
 // If visibleLeft + visibleRight >= len(value), the value is returned unchanged.
+//
+// The default mask character is '*', visibleLeft and visibleRight both default
+// to 0, meaning the entire value is obscured unless overridden via options.
 package mask
