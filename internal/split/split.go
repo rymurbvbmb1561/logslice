@@ -59,28 +59,37 @@ func ParseRules(specs []string) ([]Rule, error) {
 	}
 	rules := make([]Rule, 0, len(specs))
 	for _, spec := range specs {
-		pipe := strings.LastIndex(spec, "|")
-		if pipe < 0 {
-			return nil, fmt.Errorf("split: missing '|' delimiter in spec %q", spec)
+		rule, err := parseRule(spec)
+		if err != nil {
+			return nil, err
 		}
-		delim := spec[pipe+1:]
-		if delim == "" {
-			return nil, fmt.Errorf("split: empty delimiter in spec %q", spec)
-		}
-		left := spec[:pipe]
-		colon := strings.Index(left, ":")
-		if colon < 0 {
-			return nil, fmt.Errorf("split: missing ':' in spec %q", spec)
-		}
-		source := left[:colon]
-		if source == "" {
-			return nil, fmt.Errorf("split: empty source field in spec %q", spec)
-		}
-		targets := strings.Split(left[colon+1:], ",")
-		if len(targets) == 0 || (len(targets) == 1 && targets[0] == "") {
-			return nil, fmt.Errorf("split: no target fields in spec %q", spec)
-		}
-		rules = append(rules, Rule{Source: source, Targets: targets, Delim: delim})
+		rules = append(rules, rule)
 	}
 	return rules, nil
+}
+
+// parseRule parses a single spec of the form "source:target1,target2|delim".
+func parseRule(spec string) (Rule, error) {
+	pipe := strings.LastIndex(spec, "|")
+	if pipe < 0 {
+		return Rule{}, fmt.Errorf("split: missing '|' delimiter in spec %q", spec)
+	}
+	delim := spec[pipe+1:]
+	if delim == "" {
+		return Rule{}, fmt.Errorf("split: empty delimiter in spec %q", spec)
+	}
+	left := spec[:pipe]
+	colon := strings.Index(left, ":")
+	if colon < 0 {
+		return Rule{}, fmt.Errorf("split: missing ':' in spec %q", spec)
+	}
+	source := left[:colon]
+	if source == "" {
+		return Rule{}, fmt.Errorf("split: empty source field in spec %q", spec)
+	}
+	targets := strings.Split(left[colon+1:], ",")
+	if len(targets) == 0 || (len(targets) == 1 && targets[0] == "") {
+		return Rule{}, fmt.Errorf("split: no target fields in spec %q", spec)
+	}
+	return Rule{Source: source, Targets: targets, Delim: delim}, nil
 }
