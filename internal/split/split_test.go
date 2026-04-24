@@ -83,3 +83,25 @@ func TestApply_FewerPartsThanTargets(t *testing.T) {
 		t.Error("c should not be set")
 	}
 }
+
+func TestApply_MultipleRulesApplied(t *testing.T) {
+	rules := []split.Rule{
+		{Source: "addr", Targets: []string{"host", "port"}, Delim: ":"},
+		{Source: "kv", Targets: []string{"key", "val"}, Delim: "="},
+	}
+	s := split.New(rules)
+	e := makeEntry(map[string]any{"addr": "127.0.0.1:9090", "kv": "env=prod"})
+	out := s.Apply(e)
+	if out.Fields["host"] != "127.0.0.1" {
+		t.Errorf("host = %v", out.Fields["host"])
+	}
+	if out.Fields["port"] != "9090" {
+		t.Errorf("port = %v", out.Fields["port"])
+	}
+	if out.Fields["key"] != "env" {
+		t.Errorf("key = %v", out.Fields["key"])
+	}
+	if out.Fields["val"] != "prod" {
+		t.Errorf("val = %v", out.Fields["val"])
+	}
+}
